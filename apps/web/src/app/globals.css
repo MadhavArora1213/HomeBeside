@@ -1,0 +1,6 @@
+﻿@import "@workspace/ui/globals.css";
+
+@theme inline {
+  --font-sans: var(--font-montserrat);
+  --font-heading: var(--font-cinzel);
+}

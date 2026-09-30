@@ -1,0 +1,26 @@
+{
+  "name": "@family/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.mjs",
+    "./next": "./next.mjs",
+    "./node": "./node.mjs"
+  },
+  "files": [
+    "base.mjs",
+    "next.mjs",
+    "node.mjs"
+  ],
+  "dependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript-eslint": "^8.46.0",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "eslint": "\u003e=9",
+    "typescript": "\u003e=5"
+  }
+}

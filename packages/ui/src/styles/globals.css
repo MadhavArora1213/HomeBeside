@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-background: var(--brand-background);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-success: var(--brand-success);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-warning: var(--brand-warning);
+  --color-brand-emergency: var(--brand-emergency);
+
+  --text-h1: var(--font-size-h1);
+  --text-h1--line-height: var(--line-height-h1);
+  --text-h2: var(--font-size-h2);
+  --text-h2--line-height: var(--line-height-h2);
+  --text-body: var(--font-size-body);
+  --text-body--line-height: var(--line-height-body);
+  --text-button: var(--font-size-button);
+  --text-caption: var(--font-size-caption);
+  --text-caption--line-height: var(--line-height-caption);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* HomeBeside brand palette */
+  --brand-primary: #2e3a2f;
+  --brand-secondary: #a67c52;
+  --brand-background: #faf9f6;
+  --brand-accent: #d9cbb9;
+  --brand-ink: #1e1e1e;
+
+  /* Functional extras (not part of the brand palette) */
+  --brand-surface: #ffffff;
+  --brand-sand: #ded3c4;
+  --brand-success: #9cad9f;
+  --brand-muted: #66716e;
+  --brand-warning: #c88a2d;
+  --brand-emergency: #b94a48;
+
+  /* Font usage guide */
+  --font-size-h1: clamp(2rem, 1.1rem + 2.4vw, 3rem);
+  --line-height-h1: 1.15;
+  --font-size-h2: clamp(1.5rem, 1.35rem + 0.6vw, 2rem);
+  --line-height-h2: 1.25;
+  --font-size-body: 1.0625rem;
+  --line-height-body: 1.6;
+  --font-size-button: 0.9375rem;
+  --font-size-caption: 0.8125rem;
+  --line-height-caption: 1.5;
+  --letter-spacing-tagline: 0.3em;
+
+  --background: #faf9f6;
+  --foreground: #1e1e1e;
+  --card: #ffffff;
+  --card-foreground: #1e1e1e;
+  --popover: #ffffff;
+  --popover-foreground: #1e1e1e;
+  --primary: #2e3a2f;
+  --primary-foreground: #faf9f6;
+  --secondary: #d9cbb9;
+  --secondary-foreground: #1e1e1e;
+  --accent: #d9cbb9;
+  --accent-foreground: #1e1e1e;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans, ui-sans-serif);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-cinzel, var(--font-sans));
+  }
+  h1 {
+    font-size: var(--font-size-h1);
+    font-weight: 600;
+    line-height: var(--line-height-h1);
+  }
+  h2 {
+    font-size: var(--font-size-h2);
+    font-weight: 400;
+    line-height: var(--line-height-h2);
+  }
+  button {
+    font-family: var(--font-sans, ui-sans-serif);
+    font-weight: 500;
+    font-size: var(--font-size-button);
+  }
+}
+
+@layer components {
+  .logo-text {
+    font-family: var(--font-cinzel, var(--font-sans));
+    font-weight: 600;
+  }
+  .tagline {
+    font-family: var(--font-sans, ui-sans-serif);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-tagline);
+  }
+}

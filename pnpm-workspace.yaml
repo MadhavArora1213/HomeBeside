@@ -1,0 +1,19 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  "@firebase/util": true
+  "@img/sharp": true
+  "@parcel/watcher": true
+  "@prisma/engines": true
+  "@scarf/scarf": false
+  core-js: true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  protobufjs: true
+  sharp: true
+  simple-git-hooks: true
+  unrs-resolver: true
+  workerd: true

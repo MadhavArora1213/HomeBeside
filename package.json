@@ -1,0 +1,35 @@
+{
+  "name": "family-assistance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "db:generate": "pnpm --filter @family/api prisma:generate",
+    "db:migrate": "pnpm --filter @family/api prisma:migrate",
+    "db:deploy": "pnpm --filter @family/api prisma:deploy",
+    "db:studio": "pnpm --filter @family/api prisma:studio",
+    "db:validate": "pnpm --filter @family/api prisma:validate",
+    "infra:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infrastructure/docker/docker-compose.yml down",
+    "infra:logs": "docker compose -f infrastructure/docker/docker-compose.yml logs -f",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "3.9.9",
+    "turbo": "2.11.2",
+    "typescript": "7.0.2"
+  }
+}

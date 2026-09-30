@@ -1,0 +1,1709 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firebaseUid        String?   @unique @db.VarChar(128) @map("firebase_uid")
+  phone              String    @unique @db.VarChar(20)
+  email              String?   @unique @db.VarChar(255)
+  passwordHash       String?   @db.Text @map("password_hash")
+  firstName          String    @db.VarChar(100) @map("first_name")
+  lastName           String    @db.VarChar(100) @map("last_name")
+  profilePhotoUrl    String?   @db.Text @map("profile_photo_url")
+  countryId          String    @db.Uuid @map("country_id")
+  cityId             String    @db.Uuid @map("city_id")
+  preferredLanguage  String    @default("en") @db.VarChar(10) @map("preferred_language")
+  timezone           String    @db.VarChar(50)
+  currency           String    @db.Char(3)
+  status             String    @db.VarChar(30)
+  phoneVerifiedAt    DateTime? @db.Timestamptz(3) @map("phone_verified_at")
+  emailVerifiedAt    DateTime? @db.Timestamptz(3) @map("email_verified_at")
+  lastLoginAt        DateTime? @db.Timestamptz(3) @map("last_login_at")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  deletedAt          DateTime? @db.Timestamptz(3) @map("deleted_at")
+
+  country                    Country                  @relation(fields: [countryId], references: [id])
+  city                       City                     @relation(fields: [cityId], references: [id])
+  sessions                   UserSession[]
+  consents                   UserConsent[]
+  devices                    UserDevice[]
+  userRoles                  UserRole[]
+  families                   Family[]
+  familyMembers              FamilyMember[]
+  familyInvitationsSent      FamilyInvitation[]
+  beneficiaryConsentsGiven   BeneficiaryConsent[]
+  helper                     Helper?
+  bookings                   Booking[]
+  incidentsReported          Incident[]
+  supportTickets             SupportTicket[]
+  communicationPreference    CommunicationPreference?
+  whatsappContacts           WhatsappContact[]
+  voiceContacts              VoiceContact[]
+  callbackRequests           CallbackRequest[]
+  ratingsGiven               Rating[]
+  helperBlocks               HelperBlock[]
+  preferredHelpers           PreferredHelper[]
+  couponRedemptions          CouponRedemption[]
+  referralsReferrer          Referral[]               @relation("ReferralReferrer")
+  referralsReferred          Referral[]               @relation("ReferralReferred")
+  opsNotes                   OpsNote[]
+  auditLogs                  AuditLog[]
+  notifications              Notification[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @db.Uuid @map("user_id")
+  refreshTokenHash  String    @db.Text @map("refresh_token_hash")
+  deviceId          String?   @db.Uuid @map("device_id")
+  ipAddress         Unsupported("inet")? @map("ip_address")
+  userAgent         String?   @db.Text @map("user_agent")
+  expiresAt         DateTime  @db.Timestamptz(3) @map("expires_at")
+  revokedAt         DateTime? @db.Timestamptz(3) @map("revoked_at")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_sessions")
+}
+
+model UserConsent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid @map("user_id")
+  consentType String    @db.VarChar(50) @map("consent_type")
+  version     String    @db.VarChar(30)
+  accepted    Boolean
+  acceptedAt  DateTime  @db.Timestamptz(3) @map("accepted_at")
+  revokedAt   DateTime? @db.Timestamptz(3) @map("revoked_at")
+  ipAddress   Unsupported("inet")? @map("ip_address")
+  metadata    Json
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_consents")
+}
+
+model UserDevice {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @db.Uuid @map("user_id")
+  deviceId     String    @db.VarChar(100) @map("device_id")
+  platform     String    @db.VarChar(20)
+  pushToken    String?   @db.Text @map("push_token")
+  deviceName   String?   @db.VarChar(150) @map("device_name")
+  osVersion    String?   @db.VarChar(50) @map("os_version")
+  lastActiveAt DateTime? @db.Timestamptz(3) @map("last_active_at")
+  revokedAt    DateTime? @db.Timestamptz(3) @map("revoked_at")
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, deviceId])
+  @@map("user_devices")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  roleId    String   @db.Uuid @map("role_id")
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Family {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(150)
+  ownerUserId String   @db.Uuid @map("owner_user_id")
+  status      String   @db.VarChar(30)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  ownerUser    User                @relation(fields: [ownerUserId], references: [id])
+  members      FamilyMember[]
+  invitations  FamilyInvitation[]
+  beneficiaries Beneficiary[]
+  bookings     Booking[]
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId        String   @db.Uuid @map("family_id")
+  userId          String   @db.Uuid @map("user_id")
+  role            String   @db.VarChar(30)
+  canBook         Boolean  @default(false) @map("can_book")
+  canPay          Boolean  @default(false) @map("can_pay")
+  canView         Boolean  @default(true) @map("can_view")
+  canManageFamily Boolean  @default(false) @map("can_manage_family")
+  canEmergency    Boolean  @default(false) @map("can_emergency")
+  status          String   @db.VarChar(30)
+  joinedAt        DateTime @db.Timestamptz(3) @map("joined_at")
+  createdAt       DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  family Family @relation(fields: [familyId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([familyId, userId])
+  @@map("family_members")
+}
+
+model FamilyInvitation {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId          String    @db.Uuid @map("family_id")
+  invitedByUserId   String    @db.Uuid @map("invited_by_user_id")
+  email             String?   @db.VarChar(255)
+  phone             String?   @db.VarChar(20)
+  role              String    @db.VarChar(30)
+  tokenHash         String    @db.Text @map("token_hash")
+  status            String    @db.VarChar(30)
+  expiresAt         DateTime  @db.Timestamptz(3) @map("expires_at")
+  acceptedByUserId  String?   @db.Uuid @map("accepted_by_user_id")
+  acceptedAt        DateTime? @db.Timestamptz(3) @map("accepted_at")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  family       Family @relation(fields: [familyId], references: [id])
+  invitedByUser User  @relation(fields: [invitedByUserId], references: [id])
+
+  @@map("family_invitations")
+}
+
+model Beneficiary {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId              String    @db.Uuid @map("family_id")
+  firstName             String    @db.VarChar(100) @map("first_name")
+  lastName              String    @db.VarChar(100) @map("last_name")
+  relationship          String    @db.VarChar(50)
+  dateOfBirth           DateTime? @db.Date @map("date_of_birth")
+  gender                String?   @db.VarChar(30)
+  phone                 String?   @db.VarChar(20)
+  preferredLanguage     String    @db.VarChar(10) @map("preferred_language")
+  accessibilityInfo     String?   @db.Text @map("accessibility_info")
+  importantNotes        String?   @db.Text @map("important_notes")
+  specialInstructions  String?   @db.Text @map("special_instructions")
+  status                String    @db.VarChar(30)
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt             DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  deletedAt             DateTime? @db.Timestamptz(3) @map("deleted_at")
+
+  family          Family                @relation(fields: [familyId], references: [id])
+  contacts        BeneficiaryContact[]
+  addresses       BeneficiaryAddress[]
+  consents        BeneficiaryConsent[]
+  careCards       CareCard[]
+  bookings        Booking[]
+  visits          Visit[]
+  incidents       Incident[]
+  whatsappContacts WhatsappContact[]
+  voiceContacts   VoiceContact[]
+
+  @@map("beneficiaries")
+}
+
+model BeneficiaryContact {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beneficiaryId    String   @db.Uuid @map("beneficiary_id")
+  name             String   @db.VarChar(150)
+  relationship     String   @db.VarChar(50)
+  phone            String   @db.VarChar(20)
+  email            String?  @db.VarChar(255)
+  contactType      String   @db.VarChar(30) @map("contact_type")
+  priority         Int      @default(1)
+  canBeContacted   Boolean  @default(true) @map("can_be_contacted")
+  createdAt        DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
+
+  @@map("beneficiary_contacts")
+}
+
+model Address {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  line1             String    @db.Text
+  line2             String?   @db.Text
+  landmark          String?   @db.Text
+  cityId            String    @db.Uuid @map("city_id")
+  postalCode        String    @db.VarChar(20) @map("postal_code")
+  latitude          Float
+  longitude         Float
+  location          Unsupported("geography(Point,4326)")?
+  accessInstructions String?  @db.Text @map("access_instructions")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  city               City                 @relation(fields: [cityId], references: [id])
+  beneficiaryAddresses BeneficiaryAddress[]
+  bookings           Booking[]
+
+  @@map("addresses")
+}
+
+model BeneficiaryAddress {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beneficiaryId String   @db.Uuid @map("beneficiary_id")
+  addressId     String   @db.Uuid @map("address_id")
+  label         String   @db.VarChar(50)
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  address     Address     @relation(fields: [addressId], references: [id])
+
+  @@unique([beneficiaryId, addressId])
+  @@map("beneficiary_addresses")
+}
+
+model BeneficiaryConsent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beneficiaryId String    @db.Uuid @map("beneficiary_id")
+  consentType   String    @db.VarChar(50) @map("consent_type")
+  status        String    @db.VarChar(30)
+  givenByUserId String    @db.Uuid @map("given_by_user_id")
+  consentText   String    @db.Text @map("consent_text")
+  version       String    @db.VarChar(30)
+  givenAt       DateTime  @db.Timestamptz(3) @map("given_at")
+  revokedAt     DateTime? @db.Timestamptz(3) @map("revoked_at")
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  givenByUser User        @relation(fields: [givenByUserId], references: [id])
+
+  @@map("beneficiary_consents")
+}
+
+model CareCard {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beneficiaryId         String   @db.Uuid @map("beneficiary_id")
+  preferredHospitalId   String?  @db.Uuid @map("preferred_hospital_id")
+  doctorContactId       String?  @db.Uuid @map("doctor_contact_id")
+  criticalInstructions  String?  @db.Text @map("critical_instructions")
+  mobilityNotes         String?  @db.Text @map("mobility_notes")
+  allergyInformation    String?  @db.Text @map("allergy_information")
+  visibilityLevel       String   @db.VarChar(30) @map("visibility_level")
+  createdAt             DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [id])
+
+  @@map("care_cards")
+}
+
+model Country {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  isoCode         String   @unique @db.Char(2) @map("iso_code")
+  name            String   @db.VarChar(100)
+  currencyCode    String   @db.Char(3) @map("currency_code")
+  timezoneDefault String   @db.VarChar(50) @map("timezone_default")
+  phoneCode       String   @db.VarChar(10) @map("phone_code")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  cities City[]
+  users  User[]
+
+  @@map("countries")
+}
+
+model City {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  countryId   String   @db.Uuid @map("country_id")
+  name        String   @db.VarChar(100)
+  stateName   String   @db.VarChar(100) @map("state_name")
+  timezone    String   @db.VarChar(50)
+  latitude    Float
+  longitude   Float
+  status      String   @db.VarChar(30)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  country          Country             @relation(fields: [countryId], references: [id])
+  users            User[]
+  serviceAreas     ServiceArea[]
+  serviceAreaCities ServiceAreaCity[]
+  addresses        Address[]
+  servicePricing   ServicePricing[]
+  helpers          Helper[]
+
+  @@map("cities")
+}
+
+model ServiceArea {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cityId    String   @db.Uuid @map("city_id")
+  name      String   @db.VarChar(150)
+  boundary  Unsupported("geography(Polygon,4326)")?
+  status    String   @db.VarChar(30)
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  city              City                 @relation(fields: [cityId], references: [id])
+  serviceAreaCities ServiceAreaCity[]
+  helperServiceAreas HelperServiceArea[]
+
+  @@map("service_areas")
+}
+
+model ServiceAreaCity {
+  serviceAreaId String  @db.Uuid @map("service_area_id")
+  cityId        String  @db.Uuid @map("city_id")
+
+  serviceArea ServiceArea @relation(fields: [serviceAreaId], references: [id])
+  city        City        @relation(fields: [cityId], references: [id])
+
+  @@id([serviceAreaId, cityId])
+  @@map("service_area_cities")
+}
+
+model ServiceCategory {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String   @db.VarChar(100)
+  slug         String   @unique @db.VarChar(120)
+  description  String   @db.Text
+  displayOrder Int      @map("display_order")
+  isActive     Boolean  @map("is_active")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  services Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId        String   @db.Uuid @map("category_id")
+  name              String   @db.VarChar(150)
+  slug              String   @unique @db.VarChar(180)
+  shortDescription  String   @db.Text @map("short_description")
+  description       String   @db.Text
+  baseDurationMin   Int      @map("base_duration_min")
+  maxDurationMin    Int?     @map("max_duration_min")
+  basePrice         Decimal  @db.Decimal(12, 2) @map("base_price")
+  currency          String   @db.Char(3)
+  status            String   @db.VarChar(30)
+  createdAt         DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  category       ServiceCategory   @relation(fields: [categoryId], references: [id])
+  pricing        ServicePricing[]
+  requirements   ServiceRequirement[]
+  checklists     ServiceChecklist[]
+  policies       ServicePolicy[]
+  helperServices HelperService[]
+  bookings       Booking[]
+
+  @@map("services")
+}
+
+model ServicePricing {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceId     String    @db.Uuid @map("service_id")
+  cityId        String    @db.Uuid @map("city_id")
+  basePrice     Decimal   @db.Decimal(12, 2) @map("base_price")
+  perHourPrice  Decimal?  @db.Decimal(12, 2) @map("per_hour_price")
+  perKmPrice    Decimal?  @db.Decimal(12, 2) @map("per_km_price")
+  urgencyFee    Decimal   @default(0) @db.Decimal(12, 2) @map("urgency_fee")
+  peakFee       Decimal   @default(0) @db.Decimal(12, 2) @map("peak_fee")
+  helperPayout  Decimal   @db.Decimal(12, 2) @map("helper_payout")
+  taxPercent    Decimal   @db.Decimal(5, 2) @map("tax_percent")
+  effectiveFrom DateTime  @db.Timestamptz(3) @map("effective_from")
+  effectiveTo   DateTime? @db.Timestamptz(3) @map("effective_to")
+  isActive      Boolean   @map("is_active")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+  city    City    @relation(fields: [cityId], references: [id])
+
+  @@map("service_pricing")
+}
+
+model ServiceRequirement {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceId        String   @db.Uuid @map("service_id")
+  requirementType  String   @db.VarChar(50) @map("requirement_type")
+  requirementValue String   @db.Text @map("requirement_value")
+  isMandatory      Boolean  @map("is_mandatory")
+  createdAt        DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("service_requirements")
+}
+
+model ServiceChecklist {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceId    String   @db.Uuid @map("service_id")
+  title        String   @db.VarChar(200)
+  description  String   @db.Text
+  isRequired   Boolean  @map("is_required")
+  displayOrder Int      @map("display_order")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  service        Service         @relation(fields: [serviceId], references: [id])
+  taskChecklists TaskChecklist[]
+
+  @@map("service_checklists")
+}
+
+model ServicePolicy {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceId         String   @db.Uuid @map("service_id")
+  cancellationPolicy Json    @map("cancellation_policy")
+  safetyRules       Json     @map("safety_rules")
+  evidenceRules     Json     @map("evidence_rules")
+  notificationRules Json     @map("notification_rules")
+  allowedActions    Json     @map("allowed_actions")
+  prohibitedActions Json     @map("prohibited_actions")
+  createdAt         DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("service_policies")
+}
+
+model Helper {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @unique @db.Uuid @map("user_id")
+  firstName         String    @db.VarChar(100) @map("first_name")
+  lastName          String    @db.VarChar(100) @map("last_name")
+  dateOfBirth       DateTime  @db.Date @map("date_of_birth")
+  gender            String    @db.VarChar(30)
+  bio               String    @db.Text
+  experienceYears   Decimal   @db.Decimal(4, 1) @map("experience_years")
+  primaryCityId     String    @db.Uuid @map("primary_city_id")
+  currentLocation   Unsupported("geography(Point,4326)")? @map("current_location")
+  locationUpdatedAt DateTime? @db.Timestamptz(3) @map("location_updated_at")
+  status            String    @db.VarChar(30)
+  ratingAverage     Decimal   @default(0) @db.Decimal(3, 2) @map("rating_average")
+  ratingCount       Int       @default(0) @map("rating_count")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  user               User                 @relation(fields: [userId], references: [id])
+  primaryCity        City                 @relation(fields: [primaryCityId], references: [id])
+  serviceAreas       HelperServiceArea[]
+  services           HelperService[]
+  availability       HelperAvailability[]
+  documents          HelperDocument[]
+  verifications      HelperVerification[]
+  referenceChecks    HelperReference[]
+  training           HelperTraining[]
+  bankAccounts       HelperBankAccount[]
+  statusHistory      HelperStatusHistory[]
+  reliability        HelperReliability?
+  taskAssignments    TaskAssignment[]     @relation("TaskAssignment")
+  taskOffers         TaskOffer[]          @relation("TaskOffer")
+  taskLocations      TaskLocation[]       @relation("TaskLocation")
+  earnings           HelperEarning[]      @relation("HelperEarning")
+  visits             Visit[]
+  payouts            HelperPayout[]
+  incidents          Incident[]
+  ratings            Rating[]
+  helperBlocks       HelperBlock[]
+  preferredIn        PreferredHelper[]
+  financialTransactions FinancialTransaction[]
+
+  @@map("helpers")
+}
+
+model HelperServiceArea {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId      String   @db.Uuid @map("helper_id")
+  serviceAreaId String   @db.Uuid @map("service_area_id")
+  isPrimary     Boolean  @map("is_primary")
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper      Helper      @relation(fields: [helperId], references: [id])
+  serviceArea ServiceArea @relation(fields: [serviceAreaId], references: [id])
+
+  @@unique([helperId, serviceAreaId])
+  @@map("helper_service_areas")
+}
+
+model HelperService {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId           String    @db.Uuid @map("helper_id")
+  serviceId          String    @db.Uuid @map("service_id")
+  qualificationStatus String    @db.VarChar(30) @map("qualification_status")
+  approvedAt         DateTime? @db.Timestamptz(3) @map("approved_at")
+  approvedBy         String?   @db.Uuid @map("approved_by")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper  Helper  @relation(fields: [helperId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([helperId, serviceId])
+  @@map("helper_services")
+}
+
+model HelperAvailability {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId      String    @db.Uuid @map("helper_id")
+  dayOfWeek     Int       @db.SmallInt @map("day_of_week")
+  startTime     DateTime  @db.Time(3) @map("start_time")
+  endTime       DateTime  @db.Time(3) @map("end_time")
+  isAvailable   Boolean   @map("is_available")
+  effectiveFrom DateTime  @db.Date @map("effective_from")
+  effectiveTo   DateTime? @db.Date @map("effective_to")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_availability")
+}
+
+model HelperDocument {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId           String    @db.Uuid @map("helper_id")
+  documentType       String    @db.VarChar(50) @map("document_type")
+  documentNumber     String?   @db.VarChar(100) @map("document_number")
+  fileUrl            String    @db.Text @map("file_url")
+  fileHash           String    @db.Text @map("file_hash")
+  issuedAt           DateTime? @db.Date @map("issued_at")
+  expiresAt          DateTime? @db.Date @map("expires_at")
+  verificationStatus String    @db.VarChar(30) @map("verification_status")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_documents")
+}
+
+model HelperVerification {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId         String    @db.Uuid @map("helper_id")
+  verificationType String    @db.VarChar(50) @map("verification_type")
+  status           String    @db.VarChar(30)
+  provider         String?   @db.VarChar(100)
+  referenceId      String?   @db.VarChar(150) @map("reference_id")
+  verifiedAt       DateTime? @db.Timestamptz(3) @map("verified_at")
+  expiresAt        DateTime? @db.Timestamptz(3) @map("expires_at")
+  reviewedBy       String?   @db.Uuid @map("reviewed_by")
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_verifications")
+}
+
+model HelperReference {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId           String    @db.Uuid @map("helper_id")
+  name               String    @db.VarChar(150)
+  relationship       String    @db.VarChar(100)
+  phone              String    @db.VarChar(20)
+  verificationStatus String    @db.VarChar(30) @map("verification_status")
+  notes              String?   @db.Text
+  verifiedAt         DateTime? @db.Timestamptz(3) @map("verified_at")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_references")
+}
+
+model HelperTraining {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId       String    @db.Uuid @map("helper_id")
+  trainingType   String    @db.VarChar(100) @map("training_type")
+  status         String    @db.VarChar(30)
+  startedAt      DateTime? @db.Timestamptz(3) @map("started_at")
+  completedAt    DateTime? @db.Timestamptz(3) @map("completed_at")
+  score          Decimal?  @db.Decimal(5, 2)
+  certificateUrl String?   @db.Text @map("certificate_url")
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_training")
+}
+
+model HelperBankAccount {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId           String   @db.Uuid @map("helper_id")
+  accountHolderName  String   @db.VarChar(150) @map("account_holder_name")
+  accountNumberEnc   String   @db.Text @map("account_number_enc")
+  ifscEnc            String   @db.Text @map("ifsc_enc")
+  upiIdEnc           String?  @db.Text @map("upi_id_enc")
+  verificationStatus String   @db.VarChar(30) @map("verification_status")
+  isPrimary          Boolean  @map("is_primary")
+  createdAt          DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_bank_accounts")
+}
+
+model HelperStatusHistory {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId        String   @db.Uuid @map("helper_id")
+  oldStatus       String   @db.VarChar(30) @map("old_status")
+  newStatus       String   @db.VarChar(30) @map("new_status")
+  reason          String   @db.Text
+  changedByUserId String?  @db.Uuid @map("changed_by_user_id")
+  createdAt       DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_status_history")
+}
+
+model HelperReliability {
+  helperId            String    @id @db.Uuid @map("helper_id")
+  acceptanceRate      Decimal   @db.Decimal(5, 2) @map("acceptance_rate")
+  cancellationRate    Decimal   @db.Decimal(5, 2) @map("cancellation_rate")
+  noShowRate          Decimal   @db.Decimal(5, 2) @map("no_show_rate")
+  onTimeRate          Decimal   @db.Decimal(5, 2) @map("on_time_rate")
+  completionRate      Decimal   @db.Decimal(5, 2) @map("completion_rate")
+  averageResponseSec  Int       @map("average_response_sec")
+  incidentRate        Decimal   @db.Decimal(5, 2) @map("incident_rate")
+  reliabilityScore    Decimal   @db.Decimal(6, 2) @map("reliability_score")
+  tasksCompleted      Int       @map("tasks_completed")
+  lastCalculatedAt    DateTime  @db.Timestamptz(3) @map("last_calculated_at")
+
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@map("helper_reliability")
+}
+
+model Booking {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingNumber      String    @unique @db.VarChar(30) @map("booking_number")
+  familyId           String    @db.Uuid @map("family_id")
+  customerUserId     String    @db.Uuid @map("customer_user_id")
+  beneficiaryId      String    @db.Uuid @map("beneficiary_id")
+  serviceId          String    @db.Uuid @map("service_id")
+  addressId          String    @db.Uuid @map("address_id")
+  scheduledDate      DateTime  @db.Date @map("scheduled_date")
+  scheduledStart     DateTime  @db.Timestamptz(3) @map("scheduled_start")
+  scheduledEnd       DateTime  @db.Timestamptz(3) @map("scheduled_end")
+  durationMinutes    Int       @map("duration_minutes")
+  instructions       String?   @db.Text
+  specialRequirements Json?    @map("special_requirements")
+  contactName        String?   @db.VarChar(150) @map("contact_name")
+  contactPhone       String?   @db.VarChar(20) @map("contact_phone")
+  priceSubtotal      Decimal   @db.Decimal(12, 2) @map("price_subtotal")
+  discountAmount     Decimal   @db.Decimal(12, 2) @map("discount_amount")
+  taxAmount          Decimal   @db.Decimal(12, 2) @map("tax_amount")
+  urgencyFee         Decimal   @db.Decimal(12, 2) @map("urgency_fee")
+  totalAmount        Decimal   @db.Decimal(12, 2) @map("total_amount")
+  currency           String    @db.Char(3)
+  status             String    @db.VarChar(40)
+  paymentStatus      String    @db.VarChar(30) @map("payment_status")
+  source             String    @db.VarChar(30)
+  expiresAt          DateTime? @db.Timestamptz(3) @map("expires_at")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  cancelledAt        DateTime? @db.Timestamptz(3) @map("cancelled_at")
+  completedAt        DateTime? @db.Timestamptz(3) @map("completed_at")
+
+  family       Family                @relation(fields: [familyId], references: [id])
+  customerUser User                  @relation(fields: [customerUserId], references: [id])
+  beneficiary  Beneficiary           @relation(fields: [beneficiaryId], references: [id])
+  service      Service               @relation(fields: [serviceId], references: [id])
+  address      Address               @relation(fields: [addressId], references: [id])
+  statusHistory BookingStatusHistory[]
+  cancellations  BookingCancellation[]
+  reschedules    BookingReschedule[]
+  task           Task?
+  paymentOrders  PaymentOrder[]
+  payments       Payment[]
+  refunds        Refund[]
+  financialTransactions FinancialTransaction[]
+  incidents      Incident[]
+  disputes       Dispute[]
+  supportTickets SupportTicket[]
+  ratings        Rating[]
+  couponRedemptions CouponRedemption[]
+
+  @@map("bookings")
+}
+
+model BookingStatusHistory {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId      String   @db.Uuid @map("booking_id")
+  fromStatus     String   @db.VarChar(40) @map("from_status")
+  toStatus       String   @db.VarChar(40) @map("to_status")
+  reason         String?  @db.Text
+  changedByUserId String? @db.Uuid @map("changed_by_user_id")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_status_history")
+}
+
+model BookingCancellation {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId         String   @db.Uuid @map("booking_id")
+  cancelledByUserId String?  @db.Uuid @map("cancelled_by_user_id")
+  reason            String   @db.VarChar(100)
+  reasonDetails     String?  @db.Text @map("reason_details")
+  cancellationFee   Decimal  @db.Decimal(12, 2) @map("cancellation_fee")
+  refundAmount      Decimal  @db.Decimal(12, 2) @map("refund_amount")
+  createdAt         DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_cancellations")
+}
+
+model BookingReschedule {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId      String   @db.Uuid @map("booking_id")
+  oldStart       DateTime @db.Timestamptz(3) @map("old_start")
+  oldEnd         DateTime @db.Timestamptz(3) @map("old_end")
+  newStart       DateTime @db.Timestamptz(3) @map("new_start")
+  newEnd         DateTime @db.Timestamptz(3) @map("new_end")
+  reason         String   @db.Text
+  changedByUserId String   @db.Uuid @map("changed_by_user_id")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_reschedules")
+}
+
+model Task {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId        String    @unique @db.Uuid @map("booking_id")
+  taskNumber       String    @unique @db.VarChar(30) @map("task_number")
+  status           String    @db.VarChar(40)
+  priority         String    @db.VarChar(20)
+  startedAt        DateTime? @db.Timestamptz(3) @map("started_at")
+  completedAt      DateTime? @db.Timestamptz(3) @map("completed_at")
+  failureReason    String?   @db.Text @map("failure_reason")
+  completionNotes  String?   @db.Text @map("completion_notes")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  booking         Booking              @relation(fields: [bookingId], references: [id])
+  statusHistory   TaskStatusHistory[]
+  assignments     TaskAssignment[]     @relation("TaskAssignment")
+  offers          TaskOffer[]          @relation("TaskOffer")
+  locations       TaskLocation[]       @relation("TaskLocation")
+  checklists      TaskChecklist[]
+  evidence        TaskEvidence[]
+  events          TaskEvent[]
+  visit           Visit?
+  earnings        HelperEarning[]      @relation("HelperEarning")
+  incidents       Incident[]
+  disputes        Dispute[]
+  supportTickets  SupportTicket[]
+  ratings         Rating[]
+
+  @@map("tasks")
+}
+
+model TaskStatusHistory {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId         String   @db.Uuid @map("task_id")
+  fromStatus     String   @db.VarChar(40) @map("from_status")
+  toStatus       String   @db.VarChar(40) @map("to_status")
+  reason         String?  @db.Text
+  changedByUserId String? @db.Uuid @map("changed_by_user_id")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@map("task_status_history")
+}
+
+model TaskAssignment {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId          String    @db.Uuid @map("task_id")
+  helperId        String    @db.Uuid @map("helper_id")
+  assignmentType  String    @db.VarChar(30) @map("assignment_type")
+  assignedAt      DateTime  @db.Timestamptz(3) @map("assigned_at")
+  acceptedAt      DateTime? @db.Timestamptz(3) @map("accepted_at")
+  rejectedAt      DateTime? @db.Timestamptz(3) @map("rejected_at")
+  rejectionReason String?   @db.Text @map("rejection_reason")
+  isCurrent       Boolean   @map("is_current")
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  task   Task   @relation(fields: [taskId], references: [id], name: "TaskAssignment")
+  helper Helper @relation(fields: [helperId], references: [id], name: "TaskAssignment")
+
+  @@map("task_assignments")
+}
+
+model TaskOffer {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId        String    @db.Uuid @map("task_id")
+  helperId      String    @db.Uuid @map("helper_id")
+  offeredAt     DateTime  @db.Timestamptz(3) @map("offered_at")
+  expiresAt     DateTime  @db.Timestamptz(3) @map("expires_at")
+  status        String    @db.VarChar(30)
+  respondedAt   DateTime? @db.Timestamptz(3) @map("responded_at")
+  declineReason String?   @db.Text @map("decline_reason")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  task   Task   @relation(fields: [taskId], references: [id], name: "TaskOffer")
+  helper Helper @relation(fields: [helperId], references: [id], name: "TaskOffer")
+
+  @@map("task_offers")
+}
+
+model TaskChecklist {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId      String    @db.Uuid @map("task_id")
+  checklistId String    @db.Uuid @map("checklist_id")
+  status      String    @db.VarChar(30)
+  value       Json?
+  completedAt DateTime? @db.Timestamptz(3) @map("completed_at")
+  completedBy String?   @db.Uuid @map("completed_by")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  task      Task             @relation(fields: [taskId], references: [id])
+  checklist ServiceChecklist @relation(fields: [checklistId], references: [id])
+
+  @@map("task_checklists")
+}
+
+model TaskEvidence {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId      String   @db.Uuid @map("task_id")
+  evidenceType String  @db.VarChar(30) @map("evidence_type")
+  fileUrl     String   @db.Text @map("file_url")
+  fileHash    String   @db.Text @map("file_hash")
+  caption     String?  @db.Text
+  capturedAt  DateTime @db.Timestamptz(3) @map("captured_at")
+  uploadedBy  String   @db.Uuid @map("uploaded_by")
+  createdAt   DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@map("task_evidence")
+}
+
+model TaskLocation {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId        String    @db.Uuid @map("task_id")
+  helperId      String    @db.Uuid @map("helper_id")
+  eventType     String    @db.VarChar(30) @map("event_type")
+  latitude      Float
+  longitude     Float
+  location      Unsupported("geography(Point,4326)")?
+  accuracyMeters Decimal   @db.Decimal(8, 2) @map("accuracy_meters")
+  recordedAt    DateTime  @db.Timestamptz(3) @map("recorded_at")
+
+  task   Task   @relation(fields: [taskId], references: [id], name: "TaskLocation")
+  helper Helper @relation(fields: [helperId], references: [id], name: "TaskLocation")
+
+  @@map("task_locations")
+}
+
+model TaskEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId    String   @db.Uuid @map("task_id")
+  eventType String   @db.VarChar(60) @map("event_type")
+  actorType String   @db.VarChar(30) @map("actor_type")
+  actorId   String?  @db.Uuid @map("actor_id")
+  payload   Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@map("task_events")
+}
+
+model Visit {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId            String    @unique @db.Uuid @map("task_id")
+  helperId          String    @db.Uuid @map("helper_id")
+  beneficiaryId     String    @db.Uuid @map("beneficiary_id")
+  startedAt         DateTime  @db.Timestamptz(3) @map("started_at")
+  endedAt           DateTime  @db.Timestamptz(3) @map("ended_at")
+  checkinLatitude   Float?    @map("checkin_latitude")
+  checkinLongitude  Float?    @map("checkin_longitude")
+  checkoutLatitude  Float?    @map("checkout_latitude")
+  checkoutLongitude Float?    @map("checkout_longitude")
+  checkinMethod     String    @db.VarChar(30) @map("checkin_method")
+  checkoutMethod    String    @db.VarChar(30) @map("checkout_method")
+  status            String    @db.VarChar(30)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  task         Task                @relation(fields: [taskId], references: [id])
+  helper       Helper              @relation(fields: [helperId], references: [id])
+  beneficiary  Beneficiary         @relation(fields: [beneficiaryId], references: [id])
+  observations VisitObservation[]
+  report       VisitReport?
+
+  @@map("visits")
+}
+
+model VisitObservation {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId         String   @db.Uuid @map("visit_id")
+  observationType String   @db.VarChar(80) @map("observation_type")
+  value           Json
+  createdAt       DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  createdBy       String   @db.Uuid @map("created_by")
+
+  visit Visit @relation(fields: [visitId], references: [id])
+
+  @@map("visit_observations")
+}
+
+model VisitReport {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId      String    @unique @db.Uuid @map("visit_id")
+  summary      String?   @db.Text
+  pdfUrl       String?   @db.Text @map("pdf_url")
+  aiSummary    String?   @db.Text @map("ai_summary")
+  aiGeneratedAt DateTime? @db.Timestamptz(3) @map("ai_generated_at")
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  visit Visit             @relation(fields: [visitId], references: [id])
+  items VisitReportItem[]
+
+  @@map("visit_reports")
+}
+
+model VisitReportItem {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitReportId String   @db.Uuid @map("visit_report_id")
+  itemType      String   @db.VarChar(50) @map("item_type")
+  label         String   @db.VarChar(150)
+  value         Json
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  report VisitReport @relation(fields: [visitReportId], references: [id])
+
+  @@map("visit_report_items")
+}
+
+model PaymentOrder {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId       String    @db.Uuid @map("booking_id")
+  provider        String    @db.VarChar(30)
+  providerOrderId String    @db.VarChar(150) @map("provider_order_id")
+  amount          Decimal   @db.Decimal(12, 2)
+  currency        String    @db.Char(3)
+  status          String    @db.VarChar(30)
+  expiresAt       DateTime? @db.Timestamptz(3) @map("expires_at")
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  booking Booking   @relation(fields: [bookingId], references: [id])
+  payments Payment[]
+
+  @@map("payment_orders")
+}
+
+model Payment {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId         String    @db.Uuid @map("booking_id")
+  paymentOrderId    String    @db.Uuid @map("payment_order_id")
+  provider          String    @db.VarChar(30)
+  providerPaymentId String    @db.VarChar(150) @map("provider_payment_id")
+  amount            Decimal   @db.Decimal(12, 2)
+  currency          String    @db.Char(3)
+  method            String    @db.VarChar(30)
+  status            String    @db.VarChar(30)
+  paidAt            DateTime? @db.Timestamptz(3) @map("paid_at")
+  rawResponse       Json?     @map("raw_response")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  paymentOrder PaymentOrder  @relation(fields: [paymentOrderId], references: [id])
+  refunds      Refund[]
+  financialTransactions FinancialTransaction[]
+
+  @@map("payments")
+}
+
+model Refund {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId         String    @db.Uuid @map("payment_id")
+  bookingId         String    @db.Uuid @map("booking_id")
+  providerRefundId  String?   @db.VarChar(150) @map("provider_refund_id")
+  amount            Decimal   @db.Decimal(12, 2)
+  reason            String    @db.Text
+  status            String    @db.VarChar(30)
+  requestedAt       DateTime  @db.Timestamptz(3) @map("requested_at")
+  processedAt       DateTime? @db.Timestamptz(3) @map("processed_at")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  payment     Payment             @relation(fields: [paymentId], references: [id])
+  booking     Booking             @relation(fields: [bookingId], references: [id])
+  financialTransactions FinancialTransaction[]
+
+  @@map("refunds")
+}
+
+model FinancialTransaction {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transactionType String   @db.VarChar(50) @map("transaction_type")
+  bookingId       String?  @db.Uuid @map("booking_id")
+  paymentId       String?  @db.Uuid @map("payment_id")
+  refundId        String?  @db.Uuid @map("refund_id")
+  helperId        String?  @db.Uuid @map("helper_id")
+  referenceType   String   @db.VarChar(50) @map("reference_type")
+  referenceId     String?  @db.Uuid @map("reference_id")
+  debitAccount    String?  @db.VarChar(100) @map("debit_account")
+  creditAccount   String?  @db.VarChar(100) @map("credit_account")
+  amount          Decimal  @db.Decimal(14, 2)
+  currency        String   @db.Char(3)
+  description     String   @db.Text
+  status          String   @db.VarChar(30)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  refund  Refund?  @relation(fields: [refundId], references: [id])
+  helper  Helper?  @relation(fields: [helperId], references: [id])
+
+  @@map("financial_transactions")
+}
+
+model HelperEarning {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId         String   @db.Uuid @map("helper_id")
+  taskId           String   @db.Uuid @map("task_id")
+  grossAmount      Decimal  @db.Decimal(12, 2) @map("gross_amount")
+  adjustmentAmount Decimal  @db.Decimal(12, 2) @map("adjustment_amount")
+  netAmount        Decimal  @db.Decimal(12, 2) @map("net_amount")
+  status           String   @db.VarChar(30)
+  earnedAt         DateTime @db.Timestamptz(3) @map("earned_at")
+  createdAt        DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  helper      Helper       @relation(fields: [helperId], references: [id], name: "HelperEarning")
+  task        Task         @relation(fields: [taskId], references: [id], name: "HelperEarning")
+  payoutItems PayoutItem[]
+
+  @@map("helper_earnings")
+}
+
+model HelperPayout {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  helperId         String    @db.Uuid @map("helper_id")
+  provider         String    @db.VarChar(30)
+  providerPayoutId String?   @db.VarChar(150) @map("provider_payout_id")
+  amount           Decimal   @db.Decimal(12, 2)
+  currency         String    @db.Char(3)
+  status           String    @db.VarChar(30)
+  requestedAt      DateTime  @db.Timestamptz(3) @map("requested_at")
+  processedAt      DateTime? @db.Timestamptz(3) @map("processed_at")
+  failureReason    String?   @db.Text @map("failure_reason")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  helper     Helper       @relation(fields: [helperId], references: [id])
+  payoutItems PayoutItem[]
+
+  @@map("helper_payouts")
+}
+
+model PayoutItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payoutId  String   @db.Uuid @map("payout_id")
+  earningId String   @db.Uuid @map("earning_id")
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  payout  HelperPayout  @relation(fields: [payoutId], references: [id])
+  earning HelperEarning @relation(fields: [earningId], references: [id])
+
+  @@map("payout_items")
+}
+
+model FinancialReconciliation {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        String    @db.VarChar(50)
+  referenceDate   DateTime  @db.Date @map("reference_date")
+  totalExpected   Decimal   @db.Decimal(14, 2) @map("total_expected")
+  totalReceived   Decimal   @db.Decimal(14, 2) @map("total_received")
+  difference      Decimal   @db.Decimal(14, 2)
+  status          String    @db.VarChar(30)
+  notes           String    @db.Text
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  completedAt     DateTime? @db.Timestamptz(3) @map("completed_at")
+
+  @@map("financial_reconciliations")
+}
+
+model Incident {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  incidentNumber   String    @unique @db.VarChar(30) @map("incident_number")
+  taskId           String?   @db.Uuid @map("task_id")
+  bookingId        String?   @db.Uuid @map("booking_id")
+  beneficiaryId    String?   @db.Uuid @map("beneficiary_id")
+  helperId         String?   @db.Uuid @map("helper_id")
+  reportedByUserId String?   @db.Uuid @map("reported_by_user_id")
+  category         String    @db.VarChar(50)
+  severity         String    @db.VarChar(20)
+  description      String    @db.Text
+  status           String    @db.VarChar(30)
+  location         Unsupported("geography(Point,4326)")?
+  occurredAt       DateTime  @db.Timestamptz(3) @map("occurred_at")
+  reportedAt       DateTime  @db.Timestamptz(3) @map("reported_at")
+  resolvedAt       DateTime? @db.Timestamptz(3) @map("resolved_at")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  task           Task?               @relation(fields: [taskId], references: [id])
+  booking        Booking?            @relation(fields: [bookingId], references: [id])
+  beneficiary    Beneficiary?        @relation(fields: [beneficiaryId], references: [id])
+  helper         Helper?             @relation(fields: [helperId], references: [id])
+  reportedByUser User?               @relation(fields: [reportedByUserId], references: [id])
+  events         IncidentEvent[]
+  evidences      IncidentEvidence[]
+  escalations    EmergencyEscalation[]
+
+  @@map("incidents")
+}
+
+model IncidentEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  incidentId  String   @db.Uuid @map("incident_id")
+  eventType   String   @db.VarChar(50) @map("event_type")
+  description String   @db.Text
+  actorId     String?  @db.Uuid @map("actor_id")
+  createdAt   DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id])
+
+  @@map("incident_events")
+}
+
+model IncidentEvidence {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  incidentId   String   @db.Uuid @map("incident_id")
+  evidenceType String   @db.VarChar(30) @map("evidence_type")
+  fileUrl      String   @db.Text @map("file_url")
+  description  String?  @db.Text
+  uploadedBy   String   @db.Uuid @map("uploaded_by")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id])
+
+  @@map("incident_evidence")
+}
+
+model EmergencyEscalation {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  incidentId               String    @db.Uuid @map("incident_id")
+  triggeredBy              String    @db.Uuid @map("triggered_by")
+  priority                 String    @db.VarChar(20)
+  familyContacted          Boolean   @map("family_contacted")
+  opsContacted             Boolean   @map("ops_contacted")
+  emergencyServiceContacted Boolean  @map("emergency_service_contacted")
+  hospitalContacted        Boolean   @map("hospital_contacted")
+  status                   String    @db.VarChar(30)
+  startedAt                DateTime  @db.Timestamptz(3) @map("started_at")
+  resolvedAt               DateTime? @db.Timestamptz(3) @map("resolved_at")
+  createdAt                DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id])
+
+  @@map("emergency_escalations")
+}
+
+model Dispute {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId        String    @db.Uuid @map("booking_id")
+  taskId           String    @db.Uuid @map("task_id")
+  openedBy         String    @db.Uuid @map("opened_by")
+  disputeType      String    @db.VarChar(50) @map("dispute_type")
+  description      String    @db.Text
+  status           String    @db.VarChar(30)
+  assignedTo       String?   @db.Uuid @map("assigned_to")
+  resolution       String?   @db.Text
+  resolutionAmount Decimal?  @db.Decimal(12, 2) @map("resolution_amount")
+  openedAt         DateTime  @db.Timestamptz(3) @map("opened_at")
+  resolvedAt       DateTime? @db.Timestamptz(3) @map("resolved_at")
+
+  booking  Booking          @relation(fields: [bookingId], references: [id])
+  task     Task             @relation(fields: [taskId], references: [id])
+  evidence DisputeEvidence[]
+
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  disputeId    String   @db.Uuid @map("dispute_id")
+  evidenceType String   @db.VarChar(30) @map("evidence_type")
+  fileUrl      String   @db.Text @map("file_url")
+  uploadedBy   String   @db.Uuid @map("uploaded_by")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+
+  @@map("dispute_evidence")
+}
+
+model SupportTicket {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketNumber    String    @unique @db.VarChar(30) @map("ticket_number")
+  userId          String    @db.Uuid @map("user_id")
+  bookingId       String?   @db.Uuid @map("booking_id")
+  taskId          String?   @db.Uuid @map("task_id")
+  category        String    @db.VarChar(50)
+  priority        String    @db.VarChar(20)
+  status          String    @db.VarChar(30)
+  assignedAgentId String?   @db.Uuid @map("assigned_agent_id")
+  subject         String    @db.VarChar(200)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  resolvedAt      DateTime? @db.Timestamptz(3) @map("resolved_at")
+
+  user     User            @relation(fields: [userId], references: [id])
+  booking  Booking?        @relation(fields: [bookingId], references: [id])
+  task     Task?           @relation(fields: [taskId], references: [id])
+  messages SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId      String   @db.Uuid @map("ticket_id")
+  senderType    String   @db.VarChar(30) @map("sender_type")
+  senderId      String?  @db.Uuid @map("sender_id")
+  message       String   @db.Text
+  attachmentUrl String?  @db.Text @map("attachment_url")
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id])
+
+  @@map("support_messages")
+}
+
+model CommunicationPreference {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @db.Uuid @map("user_id")
+  whatsappEnabled Boolean @map("whatsapp_enabled")
+  smsEnabled     Boolean  @map("sms_enabled")
+  emailEnabled   Boolean  @map("email_enabled")
+  pushEnabled    Boolean  @map("push_enabled")
+  phoneEnabled   Boolean  @map("phone_enabled")
+  language       String   @db.VarChar(10)
+  marketingOptIn Boolean  @map("marketing_opt_in")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("communication_preferences")
+}
+
+model NotificationTemplate {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType          String   @db.VarChar(80) @map("event_type")
+  channel            String   @db.VarChar(30)
+  language           String   @db.VarChar(10)
+  templateName       String   @db.VarChar(150) @map("template_name")
+  templateBody       String   @db.Text @map("template_body")
+  providerTemplateId String?  @db.VarChar(150) @map("provider_template_id")
+  isActive           Boolean  @map("is_active")
+  createdAt          DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  @@map("notification_templates")
+}
+
+model Notification {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid @map("user_id")
+  eventType   String    @db.VarChar(80) @map("event_type")
+  channel     String    @db.VarChar(30)
+  bookingId   String?   @db.Uuid @map("booking_id")
+  taskId      String?   @db.Uuid @map("task_id")
+  title       String    @db.Text
+  body        String    @db.Text
+  status      String    @db.VarChar(30)
+  scheduledAt DateTime? @db.Timestamptz(3) @map("scheduled_at")
+  sentAt      DateTime? @db.Timestamptz(3) @map("sent_at")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  user       User                  @relation(fields: [userId], references: [id])
+  deliveries NotificationDelivery[]
+
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notificationId   String    @db.Uuid @map("notification_id")
+  provider         String    @db.VarChar(50)
+  providerMessageId String?  @db.VarChar(150) @map("provider_message_id")
+  status           String    @db.VarChar(30)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  lastAttemptAt    DateTime? @db.Timestamptz(3) @map("last_attempt_at")
+  deliveredAt      DateTime? @db.Timestamptz(3) @map("delivered_at")
+  failedAt         DateTime? @db.Timestamptz(3) @map("failed_at")
+  errorMessage     String?   @db.Text @map("error_message")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@map("notification_deliveries")
+}
+
+model WhatsappContact {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String?  @db.Uuid @map("user_id")
+  beneficiaryId String?  @db.Uuid @map("beneficiary_id")
+  phone         String   @unique @db.VarChar(20)
+  displayName   String?  @db.VarChar(150) @map("display_name")
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  user         User?                @relation(fields: [userId], references: [id])
+  beneficiary  Beneficiary?         @relation(fields: [beneficiaryId], references: [id])
+  conversations WhatsappConversation[]
+
+  @@map("whatsapp_contacts")
+}
+
+model WhatsappConversation {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId     String    @db.Uuid @map("contact_id")
+  status        String    @db.VarChar(30)
+  language      String    @db.VarChar(10)
+  lastMessageAt DateTime  @db.Timestamptz(3) @map("last_message_at")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  contact  WhatsappContact    @relation(fields: [contactId], references: [id])
+  messages WhatsappMessage[]
+  sessions WhatsappSession[]
+
+  @@map("whatsapp_conversations")
+}
+
+model WhatsappMessage {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId    String    @db.Uuid @map("conversation_id")
+  providerMessageId String    @unique @db.VarChar(150) @map("provider_message_id")
+  direction         String    @db.VarChar(20)
+  messageType       String    @db.VarChar(30) @map("message_type")
+  textContent       String?   @db.Text @map("text_content")
+  mediaUrl          String?   @db.Text @map("media_url")
+  payload           Json
+  status            String    @db.VarChar(30)
+  sentAt            DateTime? @db.Timestamptz(3) @map("sent_at")
+  deliveredAt       DateTime? @db.Timestamptz(3) @map("delivered_at")
+  readAt            DateTime? @db.Timestamptz(3) @map("read_at")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  conversation WhatsappConversation @relation(fields: [conversationId], references: [id])
+
+  @@map("whatsapp_messages")
+}
+
+model WhatsappSession {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @db.Uuid @map("conversation_id")
+  state          String    @db.VarChar(50)
+  context        Json
+  expiresAt      DateTime  @db.Timestamptz(3) @map("expires_at")
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  conversation WhatsappConversation @relation(fields: [conversationId], references: [id])
+
+  @@map("whatsapp_sessions")
+}
+
+model WhatsappEvent {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerEventId String    @unique @db.VarChar(150) @map("provider_event_id")
+  eventType       String    @db.VarChar(80) @map("event_type")
+  payload         Json
+  processed       Boolean   @default(false)
+  processedAt     DateTime? @db.Timestamptz(3) @map("processed_at")
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  @@map("whatsapp_events")
+}
+
+model VoiceContact {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String?  @db.Uuid @map("user_id")
+  beneficiaryId String?  @db.Uuid @map("beneficiary_id")
+  phone         String   @unique @db.VarChar(20)
+  language      String   @db.VarChar(10)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  user         User?        @relation(fields: [userId], references: [id])
+  beneficiary  Beneficiary? @relation(fields: [beneficiaryId], references: [id])
+  calls        VoiceCall[]
+
+  @@map("voice_contacts")
+}
+
+model VoiceCall {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId       String    @db.Uuid @map("contact_id")
+  provider        String    @db.VarChar(50)
+  providerCallId  String    @unique @db.VarChar(150) @map("provider_call_id")
+  direction       String    @db.VarChar(20)
+  status          String    @db.VarChar(30)
+  startedAt       DateTime  @db.Timestamptz(3) @map("started_at")
+  endedAt         DateTime? @db.Timestamptz(3) @map("ended_at")
+  durationSeconds Int?      @map("duration_seconds")
+  recordingUrl    String?   @db.Text @map("recording_url")
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  contact    VoiceContact       @relation(fields: [contactId], references: [id])
+  events     VoiceCallEvent[]
+  transcripts VoiceTranscript[]
+
+  @@map("voice_calls")
+}
+
+model VoiceCallEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  callId    String   @db.Uuid @map("call_id")
+  eventType String   @db.VarChar(50) @map("event_type")
+  data      Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  call VoiceCall @relation(fields: [callId], references: [id])
+
+  @@map("voice_call_events")
+}
+
+model VoiceTranscript {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  callId     String   @db.Uuid @map("call_id")
+  language   String   @db.VarChar(10)
+  transcript String   @db.Text
+  confidence Decimal  @db.Decimal(5, 4)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  call VoiceCall @relation(fields: [callId], references: [id])
+
+  @@map("voice_transcripts")
+}
+
+model CallbackRequest {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String?   @db.Uuid @map("user_id")
+  phone           String    @db.VarChar(20)
+  source          String    @db.VarChar(30)
+  reason          String    @db.Text
+  priority        String    @db.VarChar(20)
+  status          String    @db.VarChar(30)
+  assignedAgentId String?   @db.Uuid @map("assigned_agent_id")
+  requestedAt     DateTime  @db.Timestamptz(3) @map("requested_at")
+  completedAt     DateTime? @db.Timestamptz(3) @map("completed_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("callback_requests")
+}
+
+model Rating {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId      String   @db.Uuid @map("booking_id")
+  taskId         String   @db.Uuid @map("task_id")
+  customerUserId String   @db.Uuid @map("customer_user_id")
+  helperId       String   @db.Uuid @map("helper_id")
+  overallRating  Int      @db.SmallInt @map("overall_rating")
+  serviceRating  Int?     @db.SmallInt @map("service_rating")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+  task         Task         @relation(fields: [taskId], references: [id])
+  customerUser User         @relation(fields: [customerUserId], references: [id])
+  helper       Helper       @relation(fields: [helperId], references: [id])
+  reviews      Review[]
+
+  @@map("ratings")
+}
+
+model Review {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ratingId      String   @db.Uuid @map("rating_id")
+  reviewText    String?  @db.Text @map("review_text")
+  publicConsent Boolean  @default(false) @map("public_consent")
+  createdAt     DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+
+  rating Rating @relation(fields: [ratingId], references: [id])
+
+  @@map("reviews")
+}
+
+model HelperBlock {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  helperId  String   @db.Uuid @map("helper_id")
+  reason    String?  @db.Text
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@unique([userId, helperId])
+  @@map("helper_blocks")
+}
+
+model PreferredHelper {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  helperId  String   @db.Uuid @map("helper_id")
+  createdAt DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  helper Helper @relation(fields: [helperId], references: [id])
+
+  @@unique([userId, helperId])
+  @@map("preferred_helpers")
+}
+
+model Coupon {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String    @unique @db.VarChar(50)
+  discountType     String    @db.VarChar(30) @map("discount_type")
+  discountValue    Decimal   @db.Decimal(12, 2) @map("discount_value")
+  minimumAmount    Decimal?  @db.Decimal(12, 2) @map("minimum_amount")
+  maximumDiscount  Decimal?  @db.Decimal(12, 2) @map("maximum_discount")
+  usageLimit       Int?      @map("usage_limit")
+  perUserLimit     Int?      @map("per_user_limit")
+  startsAt         DateTime  @db.Timestamptz(3) @map("starts_at")
+  expiresAt        DateTime  @db.Timestamptz(3) @map("expires_at")
+  isActive         Boolean   @map("is_active")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  redemptions CouponRedemption[]
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  couponId       String   @db.Uuid @map("coupon_id")
+  userId         String   @db.Uuid @map("user_id")
+  bookingId      String   @db.Uuid @map("booking_id")
+  discountAmount Decimal  @db.Decimal(12, 2) @map("discount_amount")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  coupon  Coupon  @relation(fields: [couponId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("coupon_redemptions")
+}
+
+model Referral {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrerUserId String    @db.Uuid @map("referrer_user_id")
+  referredUserId String?   @db.Uuid @map("referred_user_id")
+  referralCode   String    @db.VarChar(50) @map("referral_code")
+  status         String    @db.VarChar(30)
+  rewardAmount   Decimal   @default(0) @db.Decimal(12, 2) @map("reward_amount")
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  completedAt    DateTime? @db.Timestamptz(3) @map("completed_at")
+
+  referrerUser User  @relation("ReferralReferrer", fields: [referrerUserId], references: [id])
+  referredUser User? @relation("ReferralReferred", fields: [referredUserId], references: [id])
+
+  @@map("referrals")
+}
+
+model OpsNote {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType   String   @db.VarChar(50) @map("entity_type")
+  entityId     String   @db.Uuid @map("entity_id")
+  authorUserId String   @db.Uuid @map("author_user_id")
+  note         String   @db.Text
+  isPrivate    Boolean  @default(true) @map("is_private")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  authorUser User @relation(fields: [authorUserId], references: [id])
+
+  @@map("ops_notes")
+}
+
+model AuditLog {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId String?   @db.Uuid @map("actor_user_id")
+  action      String    @db.VarChar(100)
+  entityType  String    @db.VarChar(50) @map("entity_type")
+  entityId    String?   @db.Uuid @map("entity_id")
+  oldValues   Json?     @map("old_values")
+  newValues   Json?     @map("new_values")
+  ipAddress   Unsupported("inet")? @map("ip_address")
+  userAgent   String?   @db.Text @map("user_agent")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  actorUser User? @relation(fields: [actorUserId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model EventOutbox {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType     String    @db.VarChar(100) @map("event_type")
+  aggregateType String    @db.VarChar(50) @map("aggregate_type")
+  aggregateId   String    @db.Uuid @map("aggregate_id")
+  payload       Json
+  status        String    @db.VarChar(30)
+  attempts      Int       @default(0)
+  availableAt   DateTime  @db.Timestamptz(3) @map("available_at")
+  processedAt   DateTime? @db.Timestamptz(3) @map("processed_at")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  @@map("event_outbox")
+}
+
+model IdempotencyKey {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key            String   @unique @db.VarChar(255)
+  userId         String?  @db.Uuid @map("user_id")
+  requestHash    String   @db.Text @map("request_hash")
+  responseStatus Int      @map("response_status")
+  responseBody   Json     @map("response_body")
+  expiresAt      DateTime @db.Timestamptz(3) @map("expires_at")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3) @map("created_at")
+
+  @@map("idempotency_keys")
+}
