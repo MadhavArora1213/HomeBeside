@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
 import { AppModule } from './app.module.js';
+import { createOriginGuard } from './common/security/origin.middleware.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,6 +20,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix(apiPrefix, { exclude: ['docs', 'docs-json', 'health'] });
   app.enableCors({ origin: corsOrigins, credentials: true });
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+  app.use(createOriginGuard(new Set(corsOrigins)));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

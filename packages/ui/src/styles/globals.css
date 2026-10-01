@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@source "../components";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -140,6 +142,10 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: clip;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -156,6 +162,8 @@
   h5,
   h6 {
     font-family: var(--font-cinzel, var(--font-sans));
+    overflow-wrap: anywhere;
+    min-width: 0;
   }
   h1 {
     font-size: var(--font-size-h1);

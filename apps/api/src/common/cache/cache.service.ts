@@ -22,6 +22,19 @@ export class CacheService {
     await this.redis.del(key);
   }
 
+  async increment(key: string, ttlSeconds: number): Promise<number> {
+    const count = await this.redis.incr(key);
+    if (count === 1) {
+      await this.redis.expire(key, ttlSeconds);
+    }
+    return count;
+  }
+
+  async ttlSeconds(key: string): Promise<number> {
+    const ttl = await this.redis.ttl(key);
+    return ttl > 0 ? ttl : 0;
+  }
+
   async acquireLock(key: string, ttlSeconds: number): Promise<boolean> {
     const result = await this.redis.set(
       `lock:${key}`,

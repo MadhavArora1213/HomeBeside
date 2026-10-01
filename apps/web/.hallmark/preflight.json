@@ -1,0 +1,10 @@
+﻿{
+  "scanDate": "2026-09-30",
+  "fontStack": "Cinzel (display) + Montserrat (body) via next/font/google — apps/web/src/app/layout.tsx:2,6,11; mapped in apps/web/src/app/globals.css @theme L4",
+  "palette": "HomeBeside brand tokens — packages/ui/src/styles/globals.css :root L66 (#2e3a2f primary, #a67c52 secondary, #faf9f6 background, #d9cbb9 accent, #1e1e1e ink + functional extras)",
+  "motion": "none installed (no framer-motion/gsap/motion/lenis) — motion-cut",
+  "spacing": "Tailwind default 4-pt",
+  "framework": "Next.js 16 app router (pnpm monorepo, apps/web)",
+  "preserve": ["font stack", "brand palette tokens", "spacing scale", ".logo-text/.tagline classes", "rounded-full brand CTA language"],
+  "introduce": ["macrostructure rhythm", "N6 masthead nav", "Ft1 footer", "hairline structure", "slop-test gates"]
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel, Montserrat } from "next/font/google";
+import { AuthProvider } from "@/providers/auth-provider";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cinzel.variable} ${montserrat.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
